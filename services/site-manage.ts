@@ -1,5 +1,6 @@
 // 站点管理服务：站点 CRUD、Cookie/UA 差异检测、浏览器↔服务器同步、筛选行构建
 import { api } from '../core/http'
+import { unwrapMpData } from '../core/mp-envelope'
 import { fetchSupportingSites } from './site-supporting'
 import type { SiteFilterKey } from '../core/storage-contracts'
 import type {
@@ -40,8 +41,11 @@ async function saveStoredSites(sites: Site[]): Promise<void> {
 export async function fetchSites(): Promise<Site[]> {
   const res = await api.get<Site[]>('/api/v1/site/')
   if (res.ok) {
-    await saveStoredSites(res.data || [])
-    return res.data || []
+    const sites = unwrapMpData<Site[]>(res.data)
+    // 只在拿到站点数组时写缓存，避免异常响应体覆盖 Private Store 中的站点列表
+    if (!Array.isArray(sites)) return loadStoredSites()
+    await saveStoredSites(sites)
+    return sites
   }
   return loadStoredSites()
 }

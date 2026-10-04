@@ -61,4 +61,17 @@ describe('站点管理 Private Vault 存储', () => {
     await expect(fetchSites()).resolves.toEqual([site])
     await expect(loadStoredSites()).resolves.toEqual([site])
   })
+
+  it('解析 { success, message, data } 包络中的站点数组', async () => {
+    apiGet.mockResolvedValue({ ok: true, data: { success: true, message: '', data: [site] } })
+    await expect(fetchSites()).resolves.toEqual([site])
+    expect(privateStore.sites).toEqual([site])
+  })
+
+  it('响应体不是站点数组时保留 Private Store 中的站点列表', async () => {
+    privateStore.sites = [site]
+    apiGet.mockResolvedValue({ ok: true, data: { success: true, message: '', data: {} } })
+    await expect(fetchSites()).resolves.toEqual([site])
+    expect(privateStore.sites).toEqual([site])
+  })
 })

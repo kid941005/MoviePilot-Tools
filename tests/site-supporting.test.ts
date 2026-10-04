@@ -59,4 +59,16 @@ describe('Supporting 数据读取', () => {
     apiGet.mockRejectedValueOnce(new Error('network'))
     await expect(fetchSupportingSites(true)).resolves.toBe(cached)
   })
+
+  it('解析 { success, message, data } 包络中的站点字典', async () => {
+    apiGet.mockResolvedValue({
+      ok: true,
+      data: { success: true, message: '', data: { 'wrapped.pt': { id: 7, name: 'Wrapped' } } },
+    })
+    const { fetchSupportingSites } = await loadService()
+
+    await expect(fetchSupportingSites()).resolves.toEqual({
+      'wrapped.pt': { id: 7, name: 'Wrapped', domain: 'wrapped.pt' },
+    })
+  })
 })

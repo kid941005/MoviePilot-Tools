@@ -1,4 +1,5 @@
 import { api } from '../core/http'
+import { unwrapMpData } from '../core/mp-envelope'
 import type { SiteSupportingInfo } from '../core/types'
 
 export type SupportingDict = Record<string, SiteSupportingInfo>
@@ -19,8 +20,14 @@ export async function fetchSupportingSites(force = false): Promise<SupportingDic
     .get<Record<string, Omit<SiteSupportingInfo, 'domain'>>>('/api/v1/site/supporting')
     .then((res) => {
       if (!res.ok || !res.data) return supportingCache || {}
+      const supporting = unwrapMpData<Record<string, Omit<SiteSupportingInfo, 'domain'>>>(
+        res.data,
+      )
+      if (!supporting || typeof supporting !== 'object' || Array.isArray(supporting)) {
+        return supportingCache || {}
+      }
       supportingCache = Object.fromEntries(
-        Object.entries(res.data).map(([domain, info]) => [domain, { ...info, domain }]),
+        Object.entries(supporting).map(([domain, info]) => [domain, { ...info, domain }]),
       )
       return supportingCache
     })
